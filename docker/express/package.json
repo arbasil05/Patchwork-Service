@@ -1,0 +1,21 @@
+{
+  "name": "patchwork-express-runtime",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "test": "jest --runInBand"
+  },
+  "dependencies": {
+    "express": "5.1.0",
+    "cors": "2.8.5",
+    "dotenv": "17.2.1"
+  },
+  "devDependencies": {
+    "jest": "29.7.0",
+    "supertest": "6.3.4"
+  }
+}
