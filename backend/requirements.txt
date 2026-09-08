@@ -55,3 +55,4 @@ uvloop==0.22.1
 watchfiles==1.2.0
 websockets==16.1
 yarl==1.24.2
+packaging==26.3

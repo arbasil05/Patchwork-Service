@@ -1,0 +1,19 @@
+{
+  "name": "test-node-image",
+  "runtime": "python",
+  "created_at": "2026-09-08T15:44:00.398332+00:00",
+  "updated_at": "2026-09-08T15:49:05.120389+00:00",
+  "dependencies": [
+    {
+      "name": "fastAPI",
+      "version": "0.141.1"
+    },
+    {
+      "name": "django",
+      "version": "6.1.1"
+    }
+  ],
+  "image_tag": null,
+  "status": "draft",
+  "build_log": null
+}
