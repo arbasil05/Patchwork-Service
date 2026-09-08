@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from routes import tickets, admin
+from routes import tickets, admin, admin_images, admin_packages
 from fastapi import FastAPI, Request
 from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -87,3 +87,5 @@ def health_check():
 
 app.include_router(tickets.router)
 app.include_router(admin.router, prefix="/api")
+app.include_router(admin_images.router, prefix="/api")
+app.include_router(admin_packages.router, prefix="/api")
