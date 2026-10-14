@@ -15,6 +15,14 @@ from services.npm_lookup import search_npm_package, NpmLookupError
 from services.pypi_lookup import search_pypi_package, PypiLookupError
 from services.image_build import generate_build_context
 
+from rq import Queue
+from redis import Redis
+from config.settings import settings
+from worker.build_job import run_image_build
+
+redis_con = Redis(host=settings.REDIS_HOST, port=6379)
+image_builds_queue = Queue("image_builds", connection=redis_con)
+
 router = APIRouter(prefix="/admin/images", tags=["admin_images"])
 
 @router.post("", response_model=ImageDefOut, status_code=status.HTTP_201_CREATED)
@@ -184,3 +192,27 @@ def preview_image_build(name: str, admin: str = Depends(get_current_admin)):
         return context
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/{name}/build", response_model=ImageDefOut)
+def trigger_image_build(name: str, admin: str = Depends(get_current_admin)):
+    image_def = get_image_def(name)
+    if not image_def:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Image definition '{name}' not found"
+        )
+        
+    if image_def.get("status") in ("building", "queued"):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Image definition '{name}' is already {image_def.get('status')}"
+        )
+        
+    # Set status to queued immediately before enqueueing
+    image_def = update_image_def(name, {"status": "queued"})
+    
+    # Enqueue the job
+    image_builds_queue.enqueue(run_image_build, name)
+    
+    return image_def
+

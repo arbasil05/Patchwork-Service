@@ -11,5 +11,5 @@ from config.settings import settings
 redis_con = SyncRedis(host=settings.REDIS_HOST, port=6379)
 
 if __name__ == "__main__":
-    worker = SimpleWorker(queues=["submission_queue"], connection=redis_con)
+    worker = SimpleWorker(queues=["submission_queue", "image_builds"], connection=redis_con)
     worker.work()
