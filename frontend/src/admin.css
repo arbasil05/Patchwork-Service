@@ -1,0 +1,537 @@
+/**
+ * Shared CSS for the admin image management pages.
+ *
+ * Design principles (matching Login.css):
+ *  - Plain white/light-grey palette, no gradients.
+ *  - System sans-serif font, consistent spacing.
+ *  - Colour cues only where they carry meaning (status, errors).
+ */
+
+/* ── Shell layout ─────────────────────────────────────────────────────────── */
+
+.shell {
+  display: flex;
+  min-height: 100vh;
+  font-family: sans-serif;
+  font-size: 15px;
+  color: #333;
+  background: #f4f4f9;
+  color-scheme: light;
+  text-align: left;
+}
+
+.sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 0;
+}
+
+.sidebar-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #888;
+  padding: 0 1.25rem 0.75rem;
+}
+
+.sidebar-nav-item {
+  display: block;
+  padding: 0.55rem 1.25rem;
+  cursor: pointer;
+  color: #333;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+  background: none;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  width: 100%;
+  text-align: left;
+  font-size: 15px;
+}
+
+.sidebar-nav-item:hover {
+  background: #f4f4f9;
+}
+
+.sidebar-nav-item.active {
+  border-left-color: #007bff;
+  background: #edf4ff;
+  color: #007bff;
+  font-weight: 500;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid #eee;
+}
+
+.btn-logout {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-size: 14px;
+  color: #555;
+  width: auto;
+}
+
+.btn-logout:hover {
+  background: #f4f4f9;
+}
+
+.shell-main {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+/* ── Page header ──────────────────────────────────────────────────────────── */
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.page-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #222;
+  margin: 0;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-block;
+  padding: 0.45rem 1rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  width: auto;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #007bff;
+  color: #fff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #0056b3;
+  border-color: #0056b3;
+}
+
+.btn-danger {
+  background: #fff;
+  color: #c0392b;
+  border-color: #e0b0ae;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #fdf0ef;
+}
+
+.btn-secondary {
+  background: #fff;
+  color: #333;
+  border-color: #ccc;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #f4f4f9;
+}
+
+/* ── Status badges ────────────────────────────────────────────────────────── */
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-draft    { background: #f0f0f0; color: #666; }
+.status-queued   { background: #fff3cd; color: #856404; }
+.status-building { background: #cce5ff; color: #004085; }
+.status-success  { background: #d4edda; color: #155724; }
+.status-failed   { background: #f8d7da; color: #721c24; }
+
+/* ── Table ────────────────────────────────────────────────────────────────── */
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+.data-table th {
+  background: #f9f9f9;
+  font-weight: 600;
+  color: #555;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.table-link {
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.table-link:hover {
+  text-decoration: underline;
+}
+
+/* ── Forms ────────────────────────────────────────────────────────────────── */
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+  font-family: inherit;
+  background-color: #fff;
+  color: #222;
+  color-scheme: light;
+}
+
+.form-input::placeholder {
+  color: #888;
+  opacity: 1;
+}
+
+.form-select option {
+  background-color: #fff;
+  color: #222;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 1px;
+}
+
+/* ── Inline messages ──────────────────────────────────────────────────────── */
+
+.msg-error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  padding: 0.6rem 0.9rem;
+  font-size: 14px;
+  margin: 0.75rem 0;
+}
+
+.msg-info {
+  background: #cce5ff;
+  color: #004085;
+  border: 1px solid #b8daff;
+  border-radius: 4px;
+  padding: 0.6rem 0.9rem;
+  font-size: 14px;
+  margin: 0.75rem 0;
+}
+
+/* ── Cards / sections ─────────────────────────────────────────────────────── */
+
+.card {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid #eee;
+}
+
+/* ── Dependency list ──────────────────────────────────────────────────────── */
+
+.dep-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.dep-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+}
+
+.dep-item:last-child {
+  border-bottom: none;
+}
+
+.dep-name {
+  font-family: monospace;
+  color: #333;
+}
+
+.dep-version {
+  color: #888;
+  font-size: 13px;
+  margin-left: 0.5rem;
+}
+
+/* ── Search results dropdown ──────────────────────────────────────────────── */
+
+.search-wrap {
+  position: relative;
+}
+
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.search-result-item {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 14px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background: #f4f4f9;
+}
+
+.search-result-name {
+  font-family: monospace;
+  font-weight: 500;
+}
+
+.search-result-version {
+  color: #888;
+  font-size: 12px;
+  margin-left: 0.5rem;
+}
+
+/* ── Version picker ───────────────────────────────────────────────────────── */
+
+.version-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+/* ── Build log ────────────────────────────────────────────────────────────── */
+
+.log-block {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-y: auto;
+  max-height: 400px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.log-copy-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.35rem;
+}
+
+/* ── Preview block ────────────────────────────────────────────────────────── */
+
+.preview-block {
+  background: #f4f3ec;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  white-space: pre;
+  border: 1px solid #e0e0d8;
+  margin-top: 0.5rem;
+}
+
+/* ── Empty / loading / error states ──────────────────────────────────────── */
+
+.state-box {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  padding: 3rem;
+  text-align: center;
+  color: #888;
+  font-size: 15px;
+}
+
+/* ── Confirmation modal overlay ───────────────────────────────────────────── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.modal-box {
+  background: #fff;
+  color: #333;
+  color-scheme: light;
+  text-align: left;
+  border-radius: 8px;
+  padding: 1.75rem 2rem;
+  max-width: 440px;
+  width: 90%;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+}
+
+.modal-title {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  color: #222;
+}
+
+.modal-body {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+/* ── Misc ─────────────────────────────────────────────────────────────────── */
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 14px;
+  color: #007bff;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  width: auto;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 1.25rem;
+  font-size: 14px;
+}
+
+.meta-key {
+  color: #888;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  padding-top: 2px;
+}
+
+.building-pulse {
+  display: inline-block;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}

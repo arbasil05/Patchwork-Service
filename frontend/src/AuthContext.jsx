@@ -6,10 +6,6 @@ export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
   const checkAuth = async () => {
     try {
       const response = await fetch('/api/admin/me');
@@ -18,12 +14,25 @@ export function AuthProvider({ children }) {
       } else {
         setIsAuthenticated(false);
       }
-    } catch (error) {
+    } catch {
       setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    checkAuth();
+
+    const handleExpired = () => {
+      setIsAuthenticated(false);
+    };
+
+    window.addEventListener('auth:expired', handleExpired);
+    return () => {
+      window.removeEventListener('auth:expired', handleExpired);
+    };
+  }, []);
 
   const login = async (username, password) => {
     const response = await fetch('/api/admin/login', {

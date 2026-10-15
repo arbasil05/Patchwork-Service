@@ -211,8 +211,17 @@ def trigger_image_build(name: str, admin: str = Depends(get_current_admin)):
     # Set status to queued immediately before enqueueing
     image_def = update_image_def(name, {"status": "queued"})
     
-    # Enqueue the job
-    image_builds_queue.enqueue(run_image_build, name)
+    # Enqueue the job.
+    # job_timeout=1200  — 20 min ceiling, safely above the 10-min Docker SDK timeout
+    # result_ttl=86400  — keep the RQ result key for 24 h
+    # failure_ttl=86400 — keep failed-job metadata for 24 h so admins can inspect
+    image_builds_queue.enqueue(
+        run_image_build,
+        name,
+        job_timeout=1200,
+        result_ttl=86400,
+        failure_ttl=86400,
+    )
     
     return image_def
 

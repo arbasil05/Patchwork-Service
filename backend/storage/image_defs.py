@@ -5,11 +5,22 @@ import tempfile
 import logging
 from datetime import datetime, timezone
 
-STORAGE_DIR = "/home/basil/Patchwork_Service/saved_docker_images"
+# Resolve storage directory:
+#   1. Use PATCHWORK_STORAGE_DIR env var if set.
+#   2. Otherwise default to <project_root>/saved_docker_images, where
+#      project_root is two levels above this file (backend/storage/ -> backend/ -> project/).
+_DEFAULT_STORAGE_DIR = os.path.join(
+    os.path.dirname(  # project root
+        os.path.dirname(  # backend/
+            os.path.abspath(__file__)  # backend/storage/image_defs.py
+        )
+    ),
+    "saved_docker_images",
+)
+STORAGE_DIR = os.environ.get("PATCHWORK_STORAGE_DIR", _DEFAULT_STORAGE_DIR)
 
 def get_storage_dir():
-    if not os.path.exists(STORAGE_DIR):
-        os.makedirs(STORAGE_DIR, exist_ok=True)
+    os.makedirs(STORAGE_DIR, exist_ok=True)
     return STORAGE_DIR
 
 def sanitize_name(name: str) -> str:
