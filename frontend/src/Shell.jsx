@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import ImageList from './ImageList';
 import ImageDetail from './ImageDetail';
+import PoolList from './PoolList';
 import './admin.css';
 
 export default function Shell() {
@@ -33,7 +34,8 @@ export default function Shell() {
     }
   };
 
-  // Route matching: /images/:name
+  // Route matching:
+  const isPools = currentPath.startsWith('/pools');
   const detailMatch = currentPath.match(/^\/images\/(.+)$/);
   const detailImageName = detailMatch ? decodeURIComponent(detailMatch[1]) : null;
 
@@ -43,10 +45,16 @@ export default function Shell() {
         <div className="sidebar-title">Patchwork Admin</div>
         <nav style={{ flex: 1 }}>
           <button
-            className="sidebar-nav-item active"
+            className={`sidebar-nav-item ${!isPools ? 'active' : ''}`}
             onClick={() => navigate('/images')}
           >
             Manage Images
+          </button>
+          <button
+            className={`sidebar-nav-item ${isPools ? 'active' : ''}`}
+            onClick={() => navigate('/pools')}
+          >
+            Manage Pools
           </button>
         </nav>
         <div className="sidebar-footer">
@@ -57,7 +65,9 @@ export default function Shell() {
       </aside>
 
       <main className="shell-main">
-        {detailImageName ? (
+        {isPools ? (
+          <PoolList onNavigate={navigate} />
+        ) : detailImageName ? (
           <ImageDetail name={detailImageName} onNavigate={navigate} />
         ) : (
           <ImageList onNavigate={navigate} />

@@ -90,3 +90,36 @@ export const searchNpm = (name) =>
 
 export const searchPypi = (name) =>
   apiFetch(`/api/admin/packages/pypi/search?name=${encodeURIComponent(name)}`);
+
+// ── Pools ────────────────────────────────────────────────────────────────────
+
+export const listPools = () =>
+  apiFetch('/api/admin/pools');
+
+export const getPool = (name) =>
+  apiFetch(`/api/admin/pools/${encodeURIComponent(name)}`);
+
+export const createPool = (name, imageTag, maxContainers) =>
+  apiFetch('/api/admin/pools', {
+    method: 'POST',
+    body: JSON.stringify({
+      name,
+      image_tag: imageTag,
+      max_containers: Number(maxContainers),
+    }),
+  });
+
+export const scalePool = (name, maxContainers) =>
+  apiFetch(`/api/admin/pools/${encodeURIComponent(name)}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      max_containers: Number(maxContainers),
+    }),
+  });
+
+export const deletePool = (name) =>
+  apiFetch(`/api/admin/pools/${encodeURIComponent(name)}`, { method: 'DELETE' });
+
+export const getAvailableImages = () =>
+  apiFetch('/api/admin/pools/available-images');
+
