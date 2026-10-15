@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext';
 import ImageList from './ImageList';
 import ImageDetail from './ImageDetail';
 import PoolList from './PoolList';
+import PoolDetail from './PoolDetail';
 import './admin.css';
 
 export default function Shell() {
@@ -36,6 +37,9 @@ export default function Shell() {
 
   // Route matching:
   const isPools = currentPath.startsWith('/pools');
+  const poolDetailMatch = currentPath.match(/^\/pools\/(.+)$/);
+  const detailPoolName = poolDetailMatch ? decodeURIComponent(poolDetailMatch[1]) : null;
+
   const detailMatch = currentPath.match(/^\/images\/(.+)$/);
   const detailImageName = detailMatch ? decodeURIComponent(detailMatch[1]) : null;
 
@@ -65,7 +69,9 @@ export default function Shell() {
       </aside>
 
       <main className="shell-main">
-        {isPools ? (
+        {detailPoolName ? (
+          <PoolDetail name={detailPoolName} onNavigate={navigate} />
+        ) : isPools ? (
           <PoolList onNavigate={navigate} />
         ) : detailImageName ? (
           <ImageDetail name={detailImageName} onNavigate={navigate} />

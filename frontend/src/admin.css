@@ -12,6 +12,8 @@
 .shell {
   display: flex;
   min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
   font-family: sans-serif;
   font-size: 15px;
   color: #333;
@@ -175,6 +177,10 @@
 .status-building { background: #cce5ff; color: #004085; }
 .status-success  { background: #d4edda; color: #155724; }
 .status-failed   { background: #f8d7da; color: #721c24; }
+.status-idle     { background: #d4edda; color: #155724; }
+.status-busy     { background: #fff3cd; color: #856404; }
+.status-missing  { background: #f8d7da; color: #721c24; }
+
 
 /* ── Table ────────────────────────────────────────────────────────────────── */
 

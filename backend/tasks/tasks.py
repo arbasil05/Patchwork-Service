@@ -4,7 +4,7 @@ import tarfile
 import io
 import requests
 import base64
-from .pool.pool_manager import acquire_container, release_container
+from .pool.pool_manager import acquire_container, release_container, PoolSuspendedError
 
 docker_client = docker.from_env()
 
@@ -87,6 +87,10 @@ def run_submission(req_dict: dict) -> dict:
 
     try:
         container_id = acquire_container(image_tag, timeout_seconds=timeout_seconds)
+    except PoolSuspendedError as e:
+        result = {"error": f"Failed to acquire container: {str(e)}"}
+        _dispatch_webhook(callback_url, job_id, "failed", result)
+        return result
     except Exception as e:
         result = {"error": f"Failed to acquire container: {str(e)}"}
         _dispatch_webhook(callback_url, job_id, "failed", result)

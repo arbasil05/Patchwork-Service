@@ -123,3 +123,20 @@ export const deletePool = (name) =>
 export const getAvailableImages = () =>
   apiFetch('/api/admin/pools/available-images');
 
+export const getPoolContainers = (name) =>
+  apiFetch(`/api/admin/pools/${encodeURIComponent(name)}/containers`);
+
+export const deleteContainer = (poolName, containerId, force = false) =>
+  apiFetch(
+    `/api/admin/pools/${encodeURIComponent(poolName)}/containers/${encodeURIComponent(containerId)}?force=${force}`,
+    { method: 'DELETE' }
+  );
+
+export const suspendPool = (name) =>
+  apiFetch(`/api/admin/pools/${encodeURIComponent(name)}/suspend`, { method: 'POST' });
+
+export const activatePool = (name) =>
+  apiFetch(`/api/admin/pools/${encodeURIComponent(name)}/activate`, { method: 'POST' });
+
+
+

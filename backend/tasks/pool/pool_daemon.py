@@ -247,13 +247,23 @@ def run_daemon():
                         print(f"[Daemon] Skipping pool '{pool_name}': negative max_containers {max_containers}")
                         continue
 
+                    status = pool.get("status", "active")
+                    if status not in ("active", "suspended"):
+                        print(f"[Daemon][{image_tag or pool_name}] Warning: unrecognized pool status '{status}'. Treating as active.")
+                        status = "active"
+
                     seen_tags.add(image_tag)
 
                     idle_count, busy_count = get_pool_metrics(image_tag)
                     total_containers = idle_count + busy_count
 
-                    scale_down_pool(image_tag, idle_count, busy_count, max_containers)
-                    scale_up_pool(image_tag, idle_count, total_containers, max_containers)
+                    if status == "suspended":
+                        # Reuse existing scale-down logic with effective max of 0 to reap idle containers
+                        scale_down_pool(image_tag, idle_count, busy_count, max_containers=0)
+                        # Skip scale-up entirely for suspended pool
+                    else:
+                        scale_down_pool(image_tag, idle_count, busy_count, max_containers)
+                        scale_up_pool(image_tag, idle_count, total_containers, max_containers)
 
                 except Exception as e:
                     print(f"[Daemon][{image_tag or pool_name}] Error managing pool: {e}")

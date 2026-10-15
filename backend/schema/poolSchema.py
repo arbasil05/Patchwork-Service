@@ -16,6 +16,7 @@ class PoolOut(BaseModel):
     total: int
     free: int
     occupied: int
+    status: str = "active"
     is_default: bool = False
     created_at: str
     updated_at: str
@@ -26,3 +27,16 @@ class AvailableImage(BaseModel):
     runtime: Optional[str] = None
     is_default: bool = False
     already_pooled: bool = False
+
+class ContainerOut(BaseModel):
+    id: str
+    name: str
+    state: str  # "idle" | "busy" | "missing"
+    memory_used_bytes: Optional[int] = None
+    memory_limit_bytes: Optional[int] = None
+    started_at: Optional[str] = None
+
+class PoolDetailOut(BaseModel):
+    pool: PoolOut
+    containers: list[ContainerOut]
+

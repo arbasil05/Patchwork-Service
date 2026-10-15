@@ -5,9 +5,11 @@ import {
   scalePool,
   deletePool,
   getAvailableImages,
+  suspendPool,
+  activatePool,
 } from './api';
 
-export default function PoolList() {
+export default function PoolList({ onNavigate }) {
   const [pools, setPools] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,6 +35,12 @@ export default function PoolList() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteError, setDeleteError] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Suspend modal & activate state
+  const [suspendTarget, setSuspendTarget] = useState(null);
+  const [suspendError, setSuspendError] = useState(null);
+  const [isSuspending, setIsSuspending] = useState(false);
+  const [activatingName, setActivatingName] = useState(null);
 
   const fetchPools = async (silent = false) => {
     if (!silent) setLoading(true);
@@ -192,6 +200,37 @@ export default function PoolList() {
     }
   };
 
+  const handleOpenSuspend = (pool) => {
+    setSuspendTarget(pool);
+    setSuspendError(null);
+  };
+
+  const handleConfirmSuspend = async () => {
+    if (!suspendTarget) return;
+
+    setIsSuspending(true);
+    setSuspendError(null);
+    const { data, error: err } = await suspendPool(suspendTarget.name);
+    setIsSuspending(false);
+
+    if (err) {
+      setSuspendError(err);
+    } else {
+      setPools((prev) => prev.map((p) => (p.name === data.name ? data : p)));
+      setSuspendTarget(null);
+    }
+  };
+
+  const handleActivate = async (pool) => {
+    setActivatingName(pool.name);
+    const { data, error: err } = await activatePool(pool.name);
+    setActivatingName(null);
+
+    if (!err && data) {
+      setPools((prev) => prev.map((p) => (p.name === data.name ? data : p)));
+    }
+  };
+
   return (
     <div>
       <div className="page-header">
@@ -245,7 +284,18 @@ export default function PoolList() {
               return (
                 <tr key={p.name}>
                   <td>
-                    <strong>{p.name}</strong>
+                    <a
+                      className="table-link"
+                      href={`/pools/${encodeURIComponent(p.name)}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (onNavigate) {
+                          onNavigate(`/pools/${encodeURIComponent(p.name)}`);
+                        }
+                      }}
+                    >
+                      <strong>{p.name}</strong>
+                    </a>
                     {p.is_default && (
                       <span
                         className="status-badge"
@@ -273,7 +323,13 @@ export default function PoolList() {
                     </span>
                   </td>
                   <td>
-                    {isDraining ? (
+                    {p.status === 'suspended' ? (
+                      p.total > 0 ? (
+                        <span className="status-badge status-building">Draining</span>
+                      ) : (
+                        <span className="status-badge status-draft">Suspended</span>
+                      )
+                    ) : isDraining ? (
                       <span className="status-badge status-building">
                         draining to {p.max_containers}…
                       </span>
@@ -287,6 +343,24 @@ export default function PoolList() {
                   </td>
                   <td style={{ textAlign: 'right' }}>
                     <div style={{ display: 'inline-flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+                      {p.status === 'suspended' ? (
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: '0.25rem 0.6rem', fontSize: '13px' }}
+                          onClick={() => handleActivate(p)}
+                          disabled={activatingName === p.name}
+                        >
+                          {activatingName === p.name ? 'Activating…' : 'Activate'}
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: '0.25rem 0.6rem', fontSize: '13px' }}
+                          onClick={() => handleOpenSuspend(p)}
+                        >
+                          Suspend
+                        </button>
+                      )}
                       <button
                         className="btn btn-secondary"
                         style={{ padding: '0.25rem 0.6rem', fontSize: '13px' }}
@@ -422,6 +496,12 @@ export default function PoolList() {
                 {scaleTarget.free} free, {scaleTarget.occupied} occupied).
               </div>
 
+              {scaleTarget.status === 'suspended' && (
+                <div style={{ background: '#e2e3e5', color: '#383d41', padding: '0.5rem 0.75rem', borderRadius: '4px', fontSize: '13px', marginBottom: '1rem' }}>
+                  Pool is suspended. The new max takes effect when it is activated.
+                </div>
+              )}
+
               <div className="form-group">
                 <label className="form-label" htmlFor="scale-pool-max">
                   Max Containers (0 – 10)
@@ -491,6 +571,47 @@ export default function PoolList() {
                 disabled={isDeleting}
               >
                 {isDeleting ? 'Deleting…' : 'Delete Pool'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Suspend Confirmation Modal */}
+      {suspendTarget && (
+        <div className="modal-overlay" onClick={() => !isSuspending && setSuspendTarget(null)}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <h2 className="modal-title">Suspend Pool: {suspendTarget.name}</h2>
+            <div className="modal-body">
+              <p>Are you sure you want to suspend this pool?</p>
+              <ul style={{ margin: '0.75rem 0', paddingLeft: '1.25rem', fontSize: '13px', lineHeight: '1.5', color: '#555' }}>
+                <li>Idle containers are removed immediately.</li>
+                <li>Busy containers finish their current job and are then removed.</li>
+                <li>New submissions for this image will not be served until it is activated.</li>
+              </ul>
+              {suspendTarget.is_default && (
+                <div style={{ background: '#fff3cd', color: '#856404', padding: '0.6rem 0.75rem', borderRadius: '4px', border: '1px solid #ffeeba', fontSize: '13px', marginTop: '0.75rem' }}>
+                  Ticket submissions that use this image will fail while it is suspended.
+                </div>
+              )}
+              {suspendError && <div className="msg-error" style={{ marginTop: '0.75rem' }}>{suspendError}</div>}
+            </div>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setSuspendTarget(null)}
+                disabled={isSuspending}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleConfirmSuspend}
+                disabled={isSuspending}
+              >
+                {isSuspending ? 'Suspending…' : 'Suspend Pool'}
               </button>
             </div>
           </div>

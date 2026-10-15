@@ -53,12 +53,36 @@ def provision_new_container(image_tag):
     return container_id
 
 
+class PoolSuspendedError(Exception):
+    """Raised when a container cannot be acquired because the pool is suspended."""
+    pass
+
+
+def is_pool_suspended(image_tag: str) -> bool:
+    try:
+        pool_names = redis_client.smembers("pool_configs")
+        for name in pool_names:
+            pool_data = redis_client.hgetall(f"pool_config:{name}")
+            if pool_data.get("image_tag") == image_tag:
+                return pool_data.get("status") == "suspended"
+    except Exception:
+        pass
+    return False
+
+
 def acquire_container(image_tag, timeout_seconds=10):
     idle_key = _get_idle_key(image_tag)
     busy_key = _get_busy_key(image_tag)
     start_time = time.time()
 
+    # Fail fast if pool is currently suspended
+    if is_pool_suspended(image_tag):
+        raise PoolSuspendedError(f"Pool for image '{image_tag}' is suspended.")
+
     while time.time() - start_time < timeout_seconds:
+        # Check on every loop iteration so waiting submissions fail fast if suspended mid-wait
+        if is_pool_suspended(image_tag):
+            raise PoolSuspendedError(f"Pool for image '{image_tag}' is suspended.")
 
         container_id = redis_client.srandmember(idle_key)
 

@@ -36,6 +36,7 @@ def seed_default_pools():
                 "image_tag": image_tag,
                 "max_containers": 10,
                 "is_default": "1",
+                "status": "active",
                 "created_at": now,
                 "updated_at": now,
             })
@@ -72,6 +73,7 @@ def save_pool_def(name: str, image_tag: str, max_containers: int, is_default: bo
         "image_tag": image_tag,
         "max_containers": str(max_containers),
         "is_default": "1" if is_default else "0",
+        "status": "active",
         "created_at": now,
         "updated_at": now,
     })
@@ -89,6 +91,8 @@ def update_pool_def(name: str, updates: Dict[str, Any]) -> Dict[str, Any]:
 
     if "max_containers" in updates:
         mapping["max_containers"] = str(updates["max_containers"])
+    if "status" in updates:
+        mapping["status"] = str(updates["status"])
 
     redis_client.hset(key, mapping=mapping)
     return get_pool_def(name)
@@ -104,11 +108,14 @@ def delete_pool_def(name: str) -> bool:
 
 def _format_pool_data(data: Dict[str, str]) -> Dict[str, Any]:
     try:
+        raw_status = data.get("status")
+        status = "active" if raw_status is None else raw_status
         return {
             "name": data.get("name", ""),
             "image_tag": data.get("image_tag", ""),
             "max_containers": int(data.get("max_containers", 10)),
             "is_default": data.get("is_default", "0") in ("1", "true", "True"),
+            "status": status,
             "created_at": data.get("created_at", ""),
             "updated_at": data.get("updated_at", ""),
         }
