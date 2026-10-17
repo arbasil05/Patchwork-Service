@@ -1,0 +1,7 @@
+rel_time_s,django_idle,django_busy,express_idle,express_busy,queue_len,started_jobs,cpu_percent,memory_available_mb,running_containers,throttled,oom_killed
+0.0002,4,0,4,0,0,0,30.3,5003.13,0,0,0
+0.276,3,1,4,0,0,1,30.3,5003.13,0,0,0
+0.545,3,1,4,0,0,1,30.3,5003.13,0,0,0
+0.7994,3,1,4,0,0,1,30.3,5003.13,0,0,0
+1.0534,3,1,4,0,0,1,33.9,4993.64,9,0,0
+1.4323,3,1,4,0,0,1,33.9,4993.64,9,0,0

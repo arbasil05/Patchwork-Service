@@ -7,8 +7,16 @@ import time
 import docker
 import hashlib
 
+from config.test_frameworks import (
+    FIXED_FRAMEWORKS,
+    get_fixed_dependencies,
+    is_reserved_package
+)
+
 PYTHON_BASELINE_DOCKERFILE = """\
 FROM python:3.12.11-slim-bookworm
+
+LABEL patchwork.test_framework="pytest==8.4.1"
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -38,6 +46,8 @@ CMD ["tail", "-f", "/dev/null"]
 NODE_BASELINE_DOCKERFILE = """\
 FROM node:22-bookworm-slim
 
+LABEL patchwork.test_framework="jest@29.7.0"
+
 ENV NODE_ENV=development
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false
 
@@ -57,35 +67,56 @@ CMD ["tail", "-f", "/dev/null"]
 """
 
 def generate_requirements_txt(dependencies: list[dict]) -> str:
-    """Produces requirements.txt content pinning each dependency exactly."""
+    """Produces requirements.txt content pinning fixed test framework first, followed by admin dependencies."""
+    fixed_deps = get_fixed_dependencies("python")
     lines = []
+    
+    # 1. Pinned fixed infrastructure lines at the top
+    for fixed in fixed_deps:
+        name = fixed.get("name")
+        version = fixed.get("version")
+        if name and version:
+            lines.append(f"{name}=={version}")
+            
+    # 2. Admin packages (drop any reserved package variants)
     for dep in dependencies:
         name = dep.get("name")
         version = dep.get("version")
-        if name and version:
+        if name and version and not is_reserved_package("python", name):
             lines.append(f"{name}=={version}")
-    
+            
     if not lines:
         return "# No dependencies specified\n"
         
     return "\n".join(lines) + "\n"
 
 def generate_package_json(dependencies: list[dict], image_name: str) -> str:
-    """Produces a minimal valid package.json string."""
+    """Produces package.json with devDependencies for fixed test frameworks and test script."""
     sanitized_name = re.sub(r'[^a-z0-9-]', '', image_name.lower()) or "patchwork-node-env"
     
     deps_dict = {}
     for dep in dependencies:
         name = dep.get("name")
         version = dep.get("version")
-        if name and version:
+        if name and version and not is_reserved_package("node", name):
             deps_dict[name] = version
+            
+    dev_deps_dict = {}
+    for fixed in get_fixed_dependencies("node"):
+        name = fixed.get("name")
+        version = fixed.get("version")
+        if name and version:
+            dev_deps_dict[name] = version
             
     package_json = {
         "name": sanitized_name,
         "version": "1.0.0",
         "description": f"Auto-generated environment for {image_name}",
-        "dependencies": deps_dict
+        "scripts": {
+            "test": "jest --runInBand"
+        },
+        "dependencies": deps_dict,
+        "devDependencies": dev_deps_dict
     }
     
     return json.dumps(package_json, indent=2)
@@ -128,22 +159,33 @@ def generate_build_context(image_def: dict) -> dict:
 
 def compute_image_content_hash(image_def: dict) -> str:
     """
-    Computes a deterministic hash based on the definition's runtime and dependencies.
-    Order of dependencies does not affect the hash.
+    Computes a deterministic hash based on the definition's runtime, fixed test frameworks,
+    and user dependencies.
     """
     runtime = image_def.get("runtime")
     dependencies = image_def.get("dependencies", [])
+    fixed_deps = get_fixed_dependencies(runtime)
     
-    # Sort dependencies by name to ensure consistent hashing
-    sorted_deps = sorted(dependencies, key=lambda x: x.get("name", ""))
+    # Filter out any reserved package from admin dependencies so the hash is consistent
+    cleaned_deps = [d for d in dependencies if not is_reserved_package(runtime, d.get("name", ""))]
+    sorted_deps = sorted(cleaned_deps, key=lambda x: x.get("name", ""))
+    sorted_fixed = sorted(fixed_deps, key=lambda x: x.get("name", ""))
     
     hash_payload = {
         "runtime": runtime,
+        "fixed_dependencies": sorted_fixed,
         "dependencies": sorted_deps
     }
     
     json_str = json.dumps(hash_payload, sort_keys=True)
     return hashlib.sha256(json_str.encode('utf-8')).hexdigest()[:12]
+
+def compute_expected_image_tag(image_def: dict) -> str:
+    """Computes the exact image tag that the current generator would produce."""
+    name = image_def.get("name", "unknown")
+    sanitized_name = re.sub(r'[^a-z0-9-]', '', name.lower()) or "patchwork-image"
+    content_hash = compute_image_content_hash(image_def)
+    return f"patchwork/{sanitized_name}:{content_hash}"
 
 def build_image(image_def: dict) -> dict:
     """

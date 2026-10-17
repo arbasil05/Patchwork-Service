@@ -19,6 +19,8 @@ class ImageDefOut(BaseModel):
     name: str
     runtime: Literal["python", "node"]
     dependencies: List[Dependency] = []
+    fixed_dependencies: List[Dependency] = []
+    needs_rebuild: bool = False
     status: Literal["draft", "queued", "building", "success", "failed"] | str = "draft"
     image_tag: Optional[str] = None
     build_log: Optional[str] = None

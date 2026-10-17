@@ -1,0 +1,19 @@
+{
+  "idempotency_key": "TEMPLATE_UUID",
+  "image_tag": "patchwork-express:latest",
+  "test_command": "npx jest --runInBand --ci",
+  "files": [
+    {
+      "filename": "app.js",
+      "content": "const express = require('express');\nconst app = express();\napp.use(express.json());\n\napp.post('/api/users', (req, res) => {\n  const { name, email } = req.body;\n  if (!name || !email) {\n    return res.status(400).json({ error: 'Name and email are required' });\n  }\n  return res.status(201).json({ id: 1, name, email });\n});\n\napp.get('/api/users/:id', (req, res) => {\n  return res.status(200).json({ id: parseInt(req.params.id), name: 'John Doe' });\n});\n\nmodule.exports = app;\n"
+    },
+    {
+      "filename": "app.test.js",
+      "content": "const request = require('supertest');\nconst app = require('./app');\n\ndescribe('User API', () => {\n  test('POST /api/users creates user', async () => {\n    const res = await request(app)\n      .post('/api/users')\n      .send({ name: 'Alice', email: 'alice@example.com' });\n    expect(res.statusCode).toBe(201);\n    expect(res.body).toEqual({ id: 1, name: 'Alice', email: 'alice@example.com' });\n  });\n\n  test('POST /api/users rejects missing fields', async () => {\n    const res = await request(app)\n      .post('/api/users')\n      .send({ name: 'Alice' });\n    expect(res.statusCode).toBe(400);\n    expect(res.body.error).toBe('Name and email are required');\n  });\n\n  test('GET /api/users/:id returns user', async () => {\n    const res = await request(app).get('/api/users/1');\n    expect(res.statusCode).toBe(200);\n    expect(res.body.name).toBe('John Doe');\n  });\n});\n"
+    }
+  ],
+  "callback_url": "http://127.0.0.1:9999/webhook",
+  "metadata": {
+    "execution_mode": "pool"
+  }
+}

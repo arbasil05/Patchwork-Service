@@ -1,0 +1,23 @@
+{
+  "idempotency_key": "TEMPLATE_UUID",
+  "image_tag": "patchwork-django:latest",
+  "test_command": "pytest",
+  "files": [
+    {
+      "filename": "urls.py",
+      "content": "from django.urls import path\nimport views\n\nurlpatterns = [\n    path('api/feedback/', views.submit_feedback),\n]\n"
+    },
+    {
+      "filename": "views.py",
+      "content": "import json\nfrom django.http import JsonResponse\n\ndef submit_feedback(request):\n    if request.method != 'POST':\n        return JsonResponse({'error': 'Method not allowed'}, status=405)\n    try:\n        data = json.loads(request.body)\n    except json.JSONDecodeError:\n        return JsonResponse({'error': 'Invalid JSON'}, status=400)\n    name = data.get('name')\n    message = data.get('message')\n    if not name or not message:\n        return JsonResponse({'error': 'name and message are required'}, status=400)\n    return JsonResponse({'status': 'received', 'name': name, 'message': message}, status=201)\n"
+    },
+    {
+      "filename": "test_feedback.py",
+      "content": "import django\nfrom django.conf import settings\nif not settings.configured:\n    settings.configure(SECRET_KEY='test', ROOT_URLCONF='urls', ALLOWED_HOSTS=['*'])\n    django.setup()\nfrom django.test import Client\nclient = Client()\ndef test_submit_ok():\n    resp = client.post('/api/feedback/', data='{\"name\":\"Alice\", \"message\":\"Good\"}', content_type='application/json')\n    assert resp.status_code == 201\n    assert resp.json()['status'] == 'received'\ndef test_submit_missing():\n    resp = client.post('/api/feedback/', data='{\"name\":\"Alice\"}', content_type='application/json')\n    assert resp.status_code == 400\ndef test_invalid_method():\n    resp = client.get('/api/feedback/')\n    assert resp.status_code == 405\n"
+    }
+  ],
+  "callback_url": "http://127.0.0.1:9999/webhook",
+  "metadata": {
+    "execution_mode": "pool"
+  }
+}

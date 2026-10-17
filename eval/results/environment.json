@@ -1,0 +1,49 @@
+{
+  "cpu": {
+    "model": "12th Gen Intel(R) Core(TM) i5-1235U",
+    "physical_cores": 10,
+    "logical_processors": 12
+  },
+  "ram": {
+    "total_kb": 16454388,
+    "total_gb": 15.69
+  },
+  "os": {
+    "caption": "Microsoft Windows 11 Home Single Language",
+    "version": "10.0.26200",
+    "build": "26200"
+  },
+  "power": {
+    "plan": "Balanced (381b4222-f694-41f0-9685-ff5bb260df2e)",
+    "ac_battery_state": "AC Connected",
+    "battery_status": 2,
+    "charge_percent": 100
+  },
+  "docker": {
+    "desktop_version": "4.81.0",
+    "engine_version": "29.6.1",
+    "cpus": 12,
+    "memory_bytes": 8165044224,
+    "wslconfig": "not found"
+  },
+  "redis": {
+    "server_version": "8.8.0",
+    "image": "redis:latest"
+  },
+  "python_environment": {
+    "host_python": "3.13.3",
+    "redis_py": "8.0.1",
+    "rq": "2.10.0"
+  },
+  "images": {
+    "patchwork-django:latest": {
+      "size": "394MB",
+      "python_version": "Python 3.12.11"
+    },
+    "patchwork-express:latest": {
+      "size": "383MB",
+      "node_version": "v22.23.1"
+    }
+  },
+  "git_sha": "705b3c28ec7475a5b4c04611ea6cc75c13cb1d38"
+}

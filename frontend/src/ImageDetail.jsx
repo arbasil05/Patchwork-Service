@@ -278,6 +278,11 @@ export default function ImageDetail({ name, onNavigate }) {
               {image.status}
               {isBuilding && <span className="building-pulse" style={{ marginLeft: '4px' }}>●</span>}
             </span>
+            {image.needs_rebuild && (
+              <span className="status-badge" style={{ backgroundColor: '#fff3cd', color: '#856404', marginLeft: '8px' }}>
+                Rebuild needed
+              </span>
+            )}
           </div>
         </div>
 
@@ -291,6 +296,11 @@ export default function ImageDetail({ name, onNavigate }) {
             {isBuilding && (
               <span style={{ color: '#004085', marginLeft: '6px', fontSize: '13px' }}>
                 ({image.status === 'queued' ? 'queued in background…' : 'building Docker image…'})
+              </span>
+            )}
+            {image.needs_rebuild && (
+              <span style={{ color: '#856404', marginLeft: '6px', fontSize: '13px' }}>
+                (rebuild needed for updated test framework)
               </span>
             )}
           </span>
@@ -318,29 +328,53 @@ export default function ImageDetail({ name, onNavigate }) {
 
         {depError && <div className="msg-error">{depError}</div>}
 
-        {(!image.dependencies || image.dependencies.length === 0) ? (
-          <p style={{ color: '#888', fontSize: '14px', marginBottom: '1.25rem' }}>
-            No dependencies added yet.
-          </p>
-        ) : (
-          <ul className="dep-list">
-            {image.dependencies.map((dep) => (
-              <li key={dep.name} className="dep-item">
-                <div>
-                  <span className="dep-name">{dep.name}</span>
-                  <span className="dep-version">v{dep.version}</span>
-                </div>
-                <button
-                  className="btn btn-danger"
-                  style={{ padding: '0.25rem 0.6rem', fontSize: '13px' }}
-                  onClick={() => handleRemoveDependency(dep.name)}
-                  disabled={removingDep === dep.name}
+        <ul className="dep-list" style={{ marginBottom: (!image.dependencies || image.dependencies.length === 0) ? '1rem' : 0 }}>
+          {/* Fixed Infrastructure Dependencies */}
+          {image.fixed_dependencies && image.fixed_dependencies.map((fixed) => (
+            <li key={fixed.name} className="dep-item" style={{ backgroundColor: '#fcfcfc', borderLeft: '3px solid #007bff' }}>
+              <div>
+                <span className="dep-name">{fixed.name}</span>
+                <span className="dep-version">v{fixed.version}</span>
+                <span
+                  style={{
+                    marginLeft: '8px',
+                    fontSize: '11px',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    backgroundColor: '#e9ecef',
+                    color: '#495057',
+                    fontWeight: 500
+                  }}
                 >
-                  {removingDep === dep.name ? 'Removing…' : 'Remove'}
-                </button>
-              </li>
-            ))}
-          </ul>
+                  Included in every image
+                </span>
+              </div>
+            </li>
+          ))}
+
+          {/* Admin Configured Dependencies */}
+          {image.dependencies && image.dependencies.map((dep) => (
+            <li key={dep.name} className="dep-item">
+              <div>
+                <span className="dep-name">{dep.name}</span>
+                <span className="dep-version">v{dep.version}</span>
+              </div>
+              <button
+                className="btn btn-danger"
+                style={{ padding: '0.25rem 0.6rem', fontSize: '13px' }}
+                onClick={() => handleRemoveDependency(dep.name)}
+                disabled={removingDep === dep.name}
+              >
+                {removingDep === dep.name ? 'Removing…' : 'Remove'}
+              </button>
+            </li>
+          ))}
+        </ul>
+
+        {(!image.dependencies || image.dependencies.length === 0) && (
+          <p style={{ color: '#888', fontSize: '13px', marginBottom: '1.25rem' }}>
+            No additional user dependencies added yet.
+          </p>
         )}
 
         {/* Add Dependency Search Box */}

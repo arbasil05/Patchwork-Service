@@ -18,7 +18,7 @@ from pool_manager import provision_new_container, _get_idle_key, _get_busy_key
 from config.settings import settings
 from storage.pool_defs import seed_default_pools, list_pool_defs
 
-sys.stdout.reconfigure(line_buffering=True)
+sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)
 
 redis_client = redis.Redis(host=settings.REDIS_HOST, port=6379, decode_responses=True)
 docker_client = docker.from_env()
@@ -26,9 +26,9 @@ docker_client = docker.from_env()
 # Read supported images from centralized settings
 SUPPORTED_IMAGES = [t.strip() for t in settings.SUPPORTED_IMAGES.split(",") if t.strip()]
 
-TARGET_BUFFER = 3
-MAX_POOL_SIZE = 10
-CHECK_INTERVAL = 2
+TARGET_BUFFER = int(os.getenv("TARGET_BUFFER", 3))
+MAX_POOL_SIZE = int(os.getenv("MAX_POOL_SIZE", 10))
+CHECK_INTERVAL = float(os.getenv("CHECK_INTERVAL", 2))
 
 running = True
 
@@ -106,7 +106,20 @@ def scale_up_pool(image_tag, idle_count, total_containers, max_containers):
         print(f"[Daemon][{image_tag}] Pool low! Idle: {idle_count}/{target_idle} (Max: {max_containers}). Scaling up by {to_spawn}...")
         for _ in range(to_spawn):
             try:
+                t_prov_start = time.time()
                 provision_new_container(image_tag)
+                t_prov_dur = time.time() - t_prov_start
+                try:
+                    csv_dir = os.path.abspath(os.path.join(_backend_root, "..", "eval", "results"))
+                    os.makedirs(csv_dir, exist_ok=True)
+                    csv_path = os.path.join(csv_dir, "daemon_provision_times.csv")
+                    header_needed = not os.path.exists(csv_path) or os.path.getsize(csv_path) == 0
+                    with open(csv_path, "a", encoding="utf-8") as f:
+                        if header_needed:
+                            f.write("timestamp,image_tag,seconds\n")
+                        f.write(f"{t_prov_start},{image_tag},{t_prov_dur:.6f}\n")
+                except Exception:
+                    pass
             except Exception as e:
                 print(f"[Daemon][{image_tag}] Failed to provision container: {e}")
                 break
@@ -144,7 +157,7 @@ def scale_down_pool(image_tag, idle_count, busy_count, max_containers):
 
     if idle_count > target:
         excess = idle_count - target
-        print(f"[Daemon][{image_tag}] {'Idle-only trim' if busy_count == 0 else 'Pool saturated'}. Idle: {idle_count} → {target}. Reaping {excess} containers...")
+        print(f"[Daemon][{image_tag}] {'Idle-only trim' if busy_count == 0 else 'Pool saturated'}. Idle: {idle_count} -> {target}. Reaping {excess} containers...")
 
         for _ in range(excess):
             container_id = redis_client.spop(idle_key)
@@ -169,7 +182,7 @@ def reconcile_orphans(image_tag):
     all_runner_containers = docker_client.containers.list(filters={"name": f"{sanitized_tag}_"})
     running_names = {c.name for c in all_runner_containers}
 
-    orphans = [c for c in all_runner_containers if c.name not in known_ids]
+    orphans = [c for c in all_runner_containers if c.name not in known_ids and not c.name.startswith("ondemand_")]
     if orphans:
         print(f"[Daemon][{image_tag}] Found {len(orphans)} orphaned container(s). Reaping...")
         for c in orphans:

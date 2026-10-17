@@ -17,10 +17,11 @@ def _get_busy_key(image_tag):
     return f"pool:{image_tag}:busy"
 
 
-def provision_new_container(image_tag):
+def create_container(image_tag, register_in_pool=True):
     # Sanitize the image_tag to use as a prefix in the container name
     sanitized_tag = image_tag.replace(":", "_").replace("/", "_")
-    container_id = f"{sanitized_tag}_{uuid.uuid4().hex[:8]}"
+    prefix = f"{sanitized_tag}_" if register_in_pool else f"ondemand_{sanitized_tag}_"
+    container_id = f"{prefix}{uuid.uuid4().hex[:8]}"
 
     run_kwargs = {
         "image": image_tag,
@@ -48,9 +49,14 @@ def provision_new_container(image_tag):
 
     container = docker_client.containers.run(**run_kwargs)
 
-    redis_client.sadd(_get_idle_key(image_tag), container_id)
-    print(f"[Pool] Provisioned {image_tag} warm container: {container_id}")
+    if register_in_pool:
+        redis_client.sadd(_get_idle_key(image_tag), container_id)
+        print(f"[Pool] Provisioned {image_tag} warm container: {container_id}")
     return container_id
+
+
+def provision_new_container(image_tag):
+    return create_container(image_tag, register_in_pool=True)
 
 
 class PoolSuspendedError(Exception):
@@ -70,7 +76,7 @@ def is_pool_suspended(image_tag: str) -> bool:
     return False
 
 
-def acquire_container(image_tag, timeout_seconds=10):
+def acquire_container(image_tag, timeout_seconds=10, return_stats=False):
     idle_key = _get_idle_key(image_tag)
     busy_key = _get_busy_key(image_tag)
     start_time = time.time()
@@ -79,7 +85,9 @@ def acquire_container(image_tag, timeout_seconds=10):
     if is_pool_suspended(image_tag):
         raise PoolSuspendedError(f"Pool for image '{image_tag}' is suspended.")
 
+    attempts = 0
     while time.time() - start_time < timeout_seconds:
+        attempts += 1
         # Check on every loop iteration so waiting submissions fail fast if suspended mid-wait
         if is_pool_suspended(image_tag):
             raise PoolSuspendedError(f"Pool for image '{image_tag}' is suspended.")
@@ -89,6 +97,10 @@ def acquire_container(image_tag, timeout_seconds=10):
         if container_id:
             success = redis_client.smove(idle_key, busy_key, container_id)
             if success:
+                acquire_dur = time.time() - start_time
+                pool_hit = (attempts == 1)
+                if return_stats:
+                    return container_id, acquire_dur, pool_hit
                 return container_id
 
         time.sleep(random.uniform(0.05, 0.2))

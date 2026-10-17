@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "N10": {
+    "purity_baseline_median_s": 19.152,
+    "exp1_ondemand_median_s": 21.6691,
+    "diff_pct": 11.62
+  },
+  "N50": {
+    "purity_baseline_median_s": 74.7923,
+    "exp1_ondemand_median_s": 78.9665,
+    "diff_pct": 5.29
+  }
+}

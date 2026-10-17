@@ -1,0 +1,18 @@
+{
+  "django": {
+    "image_tag": "patchwork-django:latest",
+    "count": 30,
+    "median_execution_time_s": 3.6005,
+    "median_total_worker_time_s": 5.071,
+    "median_workspace_creation_s": 0.8797,
+    "median_workspace_cleanup_s": 0.4687
+  },
+  "express": {
+    "image_tag": "patchwork-express:latest",
+    "count": 30,
+    "median_execution_time_s": 4.6908,
+    "median_total_worker_time_s": 5.713,
+    "median_workspace_creation_s": 0.8342,
+    "median_workspace_cleanup_s": 0.3826
+  }
+}

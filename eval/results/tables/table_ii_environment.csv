@@ -1,0 +1,15 @@
+Parameter,Value
+Host CPU,12th Gen Intel(R) Core(TM) i5-1235U
+Physical Cores / Logical Threads,10 / 12
+Host RAM,15.69 GB
+Operating System,Microsoft Windows 11 Home Single Language (Build 26200)
+Windows Power Plan,Balanced (381b4222-f694-41f0-9685-ff5bb260df2e)
+Docker Desktop / Engine,v4.81.0 / Engine 29.6.1
+Docker Assigned CPUs / Memory,12 CPUs / 7.6 GB
+WSL Configuration (.wslconfig),not found
+Redis Server Version / Image,8.8.0 (redis:latest)
+Host Python / redis-py / rq,"Python 3.13.3, redis 8.0.1, rq 2.10.0"
+patchwork-django:latest,"394 MB, Python 3.12.11 (pytest)"
+patchwork-express:latest,"383 MB, Node v22.23.1 (Jest)"
+Worker Configurations Evaluated,"W = 1, 2, 4, 8"
+Git SHA,705b3c28ec7475a5b4c04611ea6cc75c13cb1d38

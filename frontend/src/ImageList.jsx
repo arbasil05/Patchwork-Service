@@ -198,6 +198,19 @@ export default function ImageList({ onNavigate }) {
                   <span className={`status-badge status-${img.status}`}>
                     {img.status}
                   </span>
+                  {img.needs_rebuild && (
+                    <span
+                      className="status-badge"
+                      style={{
+                        backgroundColor: '#fff3cd',
+                        color: '#856404',
+                        marginLeft: '6px',
+                        fontSize: '11px'
+                      }}
+                    >
+                      Rebuild needed
+                    </span>
+                  )}
                 </td>
                 <td>{img.dependencies ? img.dependencies.length : 0}</td>
                 <td style={{ fontFamily: 'monospace', fontSize: '13px' }}>

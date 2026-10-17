@@ -7,6 +7,7 @@ from redis import Redis as SyncRedis
 from rq import Queue
 from rq.job import Job
 from config.settings import settings
+import time
 
 redis_conn = AsyncRedis(host=settings.REDIS_HOST, port=6379)
 sync_redis_conn = SyncRedis(host=settings.REDIS_HOST, port=6379)
@@ -42,6 +43,7 @@ async def submit_ticket(req: ExecuteRequest, client: dict = Depends(verify_clien
 
     # Convert request to dictionary, using model_dump if available (pydantic v2), else dict (v1)
     req_dict = req.model_dump(mode='json') if hasattr(req, "model_dump") else req.dict()
+    req_dict["_enqueued_at"] = time.time()
     
     job = task_queue.enqueue(
         run_submission,

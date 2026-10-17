@@ -1,0 +1,15 @@
+{
+  "git_sha": "705b3c28ec7475a5b4c04611ea6cc75c13cb1d38",
+  "random_seed": 42,
+  "start_time_utc": "2026-10-17T17:19:54.980447+00:00",
+  "experiments": [
+    "Exp 1",
+    "Gate V6",
+    "Exp 2",
+    "Exp 3",
+    "Exp 4",
+    "Exp 5",
+    "Exp 6",
+    "Exp 7"
+  ]
+}

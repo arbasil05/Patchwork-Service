@@ -13,7 +13,12 @@ from storage.image_defs import (
 )
 from services.npm_lookup import search_npm_package, NpmLookupError
 from services.pypi_lookup import search_pypi_package, PypiLookupError
-from services.image_build import generate_build_context
+from services.image_build import generate_build_context, compute_expected_image_tag
+from config.test_frameworks import (
+    get_fixed_dependencies,
+    is_reserved_package,
+    get_reserved_message
+)
 
 from rq import Queue
 from redis import Redis
@@ -24,6 +29,23 @@ redis_con = Redis(host=settings.REDIS_HOST, port=6379)
 image_builds_queue = Queue("image_builds", connection=redis_con)
 
 router = APIRouter(prefix="/admin/images", tags=["admin_images"])
+
+def _decorate_image_def(image_def: dict) -> dict:
+    """Adds computed fields fixed_dependencies and needs_rebuild without persisting to storage."""
+    res = dict(image_def)
+    runtime = res.get("runtime", "")
+    res["fixed_dependencies"] = get_fixed_dependencies(runtime)
+    
+    # Compute needs_rebuild
+    status = res.get("status")
+    stored_tag = res.get("image_tag")
+    if status == "success" and stored_tag:
+        expected_tag = compute_expected_image_tag(res)
+        res["needs_rebuild"] = (stored_tag != expected_tag)
+    else:
+        res["needs_rebuild"] = False
+        
+    return res
 
 @router.post("", response_model=ImageDefOut, status_code=status.HTTP_201_CREATED)
 def create_image_def(image_def: ImageDefCreate, admin: str = Depends(get_current_admin)):
@@ -37,7 +59,7 @@ def create_image_def(image_def: ImageDefCreate, admin: str = Depends(get_current
     try:
         data = image_def.model_dump()
         saved = save_image_def(data)
-        return saved
+        return _decorate_image_def(saved)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -46,7 +68,8 @@ def create_image_def(image_def: ImageDefCreate, admin: str = Depends(get_current
 
 @router.get("", response_model=List[ImageDefOut])
 def get_all_image_defs(admin: str = Depends(get_current_admin)):
-    return list_image_defs()
+    raw_defs = list_image_defs()
+    return [_decorate_image_def(d) for d in raw_defs]
 
 @router.get("/{name}", response_model=ImageDefOut)
 def get_image_def_by_name(name: str, admin: str = Depends(get_current_admin)):
@@ -56,7 +79,7 @@ def get_image_def_by_name(name: str, admin: str = Depends(get_current_admin)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Image definition '{name}' not found"
         )
-    return image_def
+    return _decorate_image_def(image_def)
 
 @router.delete("/{name}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_image_def(name: str, admin: str = Depends(get_current_admin)):
@@ -82,6 +105,13 @@ async def add_dependency(name: str, dependency: DependencyAdd, admin: str = Depe
     pkg_version = dependency.version
     version_was_explicit = pkg_version is not None
     
+    # 0. Check if this is a reserved fixed framework package
+    if is_reserved_package(runtime, pkg_name):
+        raise HTTPException(
+            status_code=400,
+            detail=get_reserved_message(runtime, pkg_name)
+        )
+        
     # 1. Validate package name format and look up in registry
     if runtime == "node":
         if not NPM_NAME_REGEX.match(pkg_name):
@@ -146,7 +176,7 @@ async def add_dependency(name: str, dependency: DependencyAdd, admin: str = Depe
         
     # 6. Save updated definition
     updated = update_image_def(name, {"dependencies": deps})
-    return updated
+    return _decorate_image_def(updated)
 
 @router.delete("/{name}/dependencies/{package_name:path}", response_model=ImageDefOut)
 def remove_dependency(name: str, package_name: str, admin: str = Depends(get_current_admin)):
@@ -176,7 +206,7 @@ def remove_dependency(name: str, package_name: str, admin: str = Depends(get_cur
         )
         
     updated = update_image_def(name, {"dependencies": filtered_deps})
-    return updated
+    return _decorate_image_def(updated)
 
 @router.get("/{name}/preview-build")
 def preview_image_build(name: str, admin: str = Depends(get_current_admin)):
@@ -223,5 +253,5 @@ def trigger_image_build(name: str, admin: str = Depends(get_current_admin)):
         failure_ttl=86400,
     )
     
-    return image_def
+    return _decorate_image_def(image_def)
 

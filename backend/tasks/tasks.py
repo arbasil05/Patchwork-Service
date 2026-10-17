@@ -1,10 +1,11 @@
+import os
 import docker
 import time
 import tarfile
 import io
 import requests
 import base64
-from .pool.pool_manager import acquire_container, release_container, PoolSuspendedError
+from .pool.pool_manager import acquire_container, release_container, create_container, PoolSuspendedError
 
 docker_client = docker.from_env()
 
@@ -69,34 +70,66 @@ def _dispatch_webhook(callback_url, job_id, status, result):
 
 def run_submission(req_dict: dict) -> dict:
     """
-    Executes a user submission securely inside a warm Docker container.
+    Executes a user submission securely inside a Docker container (pool or on-demand).
     """
+    job_start_time = time.time()
+    enqueued_at = req_dict.get("_enqueued_at")
+    queue_delay = (job_start_time - enqueued_at) if enqueued_at else 0.0
+
     image_tag = req_dict.get("image_tag")
     files = req_dict.get("files", [])
     test_command = req_dict.get("test_command")
     limits = req_dict.get("limits", {})
     callback_url = req_dict.get("callback_url")
     job_id = req_dict.get("idempotency_key")
-    
+    metadata_in = req_dict.get("metadata", {}) or {}
+
+    eval_mode_switch = os.getenv("EVAL_MODE_SWITCH") == "1"
+    requested_mode = metadata_in.get("execution_mode", "pool")
+    is_on_demand = eval_mode_switch and (requested_mode == "on_demand")
+    execution_mode = "on_demand" if is_on_demand else "pool"
+
+    metrics = {
+        "queue_delay": queue_delay,
+        "execution_mode": execution_mode,
+        "container_acquire_time": None,
+        "pool_hit": None,
+        "container_create_time": None,
+        "container_destroy_time": None,
+    }
+
     timeout_seconds = limits.get("timeout_seconds", 10)
-    
+
     if not image_tag or not test_command:
-        result = {"error": "Missing image_tag or test_command in request."}
+        result = {"error": "Missing image_tag or test_command in request.", "metrics": metrics}
         _dispatch_webhook(callback_url, job_id, "failed", result)
         return result
 
-    try:
-        container_id = acquire_container(image_tag, timeout_seconds=timeout_seconds)
-    except PoolSuspendedError as e:
-        result = {"error": f"Failed to acquire container: {str(e)}"}
-        _dispatch_webhook(callback_url, job_id, "failed", result)
-        return result
-    except Exception as e:
-        result = {"error": f"Failed to acquire container: {str(e)}"}
-        _dispatch_webhook(callback_url, job_id, "failed", result)
-        return result
+    container_id = None
+    if is_on_demand:
+        t_create_start = time.time()
+        try:
+            container_id = create_container(image_tag, register_in_pool=False)
+            metrics["container_create_time"] = time.time() - t_create_start
+            metrics["pool_hit"] = False
+        except Exception as e:
+            result = {"error": f"Failed to create on-demand container: {str(e)}", "metrics": metrics}
+            _dispatch_webhook(callback_url, job_id, "failed", result)
+            return result
+    else:
+        try:
+            container_id, acquire_dur, pool_hit = acquire_container(image_tag, timeout_seconds=timeout_seconds, return_stats=True)
+            metrics["container_acquire_time"] = acquire_dur
+            metrics["pool_hit"] = pool_hit
+        except PoolSuspendedError as e:
+            result = {"error": f"Failed to acquire container: {str(e)}", "metrics": metrics}
+            _dispatch_webhook(callback_url, job_id, "failed", result)
+            return result
+        except Exception as e:
+            result = {"error": f"Failed to acquire container: {str(e)}", "metrics": metrics}
+            _dispatch_webhook(callback_url, job_id, "failed", result)
+            return result
 
-    metrics = {}
     total_start = time.time()
     try:
         container = docker_client.containers.get(container_id)
@@ -119,7 +152,7 @@ def run_submission(req_dict: dict) -> dict:
         t3 = time.time()
         metrics["execution_time"] = t3 - t2
 
-        # 4. Remove submission files before releasing the container
+        # 4. Remove submission files before releasing/destroying the container
         t4 = time.time()
         cleanup_submission_files(container, files)
         t5 = time.time()
@@ -132,16 +165,25 @@ def run_submission(req_dict: dict) -> dict:
             "stderr": "",
             "metrics": metrics
         }
-        
-        status = "completed" if exit_code == 0 else "failed"
+
+        status = "completed"
         _dispatch_webhook(callback_url, job_id, status, result)
-        
+
         return result
-        
+
     except Exception as e:
-        result = {"error": f"Execution failed: {str(e)}"}
+        result = {"error": f"Execution failed: {str(e)}", "metrics": metrics}
         _dispatch_webhook(callback_url, job_id, "failed", result)
         return result
     finally:
-        # Always release container back to the idle pool
-        release_container(image_tag, container_id)
+        if container_id:
+            if is_on_demand:
+                t_dest_0 = time.time()
+                try:
+                    c = docker_client.containers.get(container_id)
+                    c.kill()
+                except Exception:
+                    pass
+                metrics["container_destroy_time"] = time.time() - t_dest_0
+            else:
+                release_container(image_tag, container_id)
