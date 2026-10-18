@@ -21,7 +21,7 @@ async def run_v3():
     receiver = WebhookReceiver()
     await receiver.start()
 
-    PYTHON_BACKEND = os.path.abspath("backend/.backend/Scripts/python.exe")
+    from process_manager import PYTHON_BACKEND
     BACKEND_DIR = os.path.abspath("backend")
 
     # 1. Compare HostConfig between pool container and on-demand container for both Django and Express

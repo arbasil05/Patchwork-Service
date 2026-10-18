@@ -13,16 +13,15 @@ import rq
 
 sys.path.insert(0, os.path.abspath("eval"))
 from receiver import WebhookReceiver
-from process_manager import ProcessManager
+from process_manager import ProcessManager, PYTHON_BACKEND
 
-PYTHON_BACKEND = os.path.abspath("backend/.backend/Scripts/python.exe")
 BACKEND_DIR = os.path.abspath("backend")
 PRE_CHANGE_DIR = os.path.abspath("eval/pre_change")
 
 def start_custom_worker(is_pre_change: bool = False, worker_log_path: str = "eval/results/logs/worker_v4.log"):
     env = os.environ.copy()
     if is_pre_change:
-        env["PYTHONPATH"] = f"{PRE_CHANGE_DIR};{BACKEND_DIR}"
+        env["PYTHONPATH"] = os.pathsep.join([PRE_CHANGE_DIR, BACKEND_DIR])
         worker_code = f"""
 import sys, os
 sys.path.insert(0, r'{PRE_CHANGE_DIR}')

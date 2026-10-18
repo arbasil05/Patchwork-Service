@@ -46,6 +46,10 @@ def get_pool_def(name: str) -> Optional[Dict[str, Any]]:
     key = f"{POOL_HASH_PREFIX}{name}"
     data = redis_client.hgetall(key)
     if not data:
+        for pool_name in redis_client.smembers(POOLS_SET_KEY):
+            pdata = redis_client.hgetall(f"{POOL_HASH_PREFIX}{pool_name}")
+            if pdata.get("image_tag") == name or pool_name == name.split(":")[0].replace("/", "-"):
+                return _format_pool_data(pdata)
         return None
     
     return _format_pool_data(data)
@@ -84,7 +88,15 @@ def save_pool_def(name: str, image_tag: str, max_containers: int, is_default: bo
 def update_pool_def(name: str, updates: Dict[str, Any]) -> Dict[str, Any]:
     key = f"{POOL_HASH_PREFIX}{name}"
     if not redis_client.exists(key):
-        raise ValueError(f"Pool '{name}' does not exist.")
+        # Fallback: check if name matches an image_tag or sanitized name
+        for pool_name in redis_client.smembers(POOLS_SET_KEY):
+            pdata = redis_client.hgetall(f"{POOL_HASH_PREFIX}{pool_name}")
+            if pdata.get("image_tag") == name or pool_name == name.split(":")[0].replace("/", "-"):
+                name = pool_name
+                key = f"{POOL_HASH_PREFIX}{name}"
+                break
+        else:
+            raise ValueError(f"Pool '{name}' does not exist.")
 
     now = datetime.now(timezone.utc).isoformat()
     mapping = {"updated_at": now}

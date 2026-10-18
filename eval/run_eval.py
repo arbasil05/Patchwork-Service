@@ -290,7 +290,10 @@ async def run_evaluation_suite():
             daemon_is_running = False
             # Clean leftover pool containers
             import subprocess
-            subprocess.run(["powershell", "-Command", "docker ps -q --filter 'name=patchwork' | ForEach-Object { docker kill $_ }"], capture_output=True)
+            res = subprocess.run(["docker", "ps", "-q", "--filter", "name=patchwork"], capture_output=True, text=True)
+            leftover_cids = [c.strip() for c in res.stdout.strip().splitlines() if c.strip()]
+            if leftover_cids:
+                subprocess.run(["docker", "kill", *leftover_cids], capture_output=True)
             print("[Cell] Pool daemon stopped, 0 pool containers present (Purity baseline)")
         else:
             if current_m != M:

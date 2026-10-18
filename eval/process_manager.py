@@ -7,7 +7,21 @@ import redis
 import rq
 from typing import List, Optional
 
-PYTHON_BACKEND = os.path.abspath("backend/.backend/Scripts/python.exe")
+def _find_backend_python():
+    candidates = [
+        os.path.abspath("backend/venv/bin/python"),
+        os.path.abspath("backend/.venv/bin/python"),
+        os.path.abspath("backend/.backend/bin/python"),
+        os.path.abspath("backend/venv/Scripts/python.exe"),
+        os.path.abspath("backend/.backend/Scripts/python.exe"),
+        sys.executable,
+    ]
+    for c in candidates:
+        if os.path.isfile(c) and os.access(c, os.X_OK):
+            return c
+    return sys.executable
+
+PYTHON_BACKEND = _find_backend_python()
 BACKEND_DIR = os.path.abspath("backend")
 LOGS_DIR = os.path.abspath("eval/results/logs")
 

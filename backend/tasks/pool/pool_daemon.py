@@ -26,8 +26,8 @@ docker_client = docker.from_env()
 # Read supported images from centralized settings
 SUPPORTED_IMAGES = [t.strip() for t in settings.SUPPORTED_IMAGES.split(",") if t.strip()]
 
-TARGET_BUFFER = int(os.getenv("TARGET_BUFFER", 3))
-MAX_POOL_SIZE = int(os.getenv("MAX_POOL_SIZE", 10))
+TARGET_BUFFER = int(os.getenv("TARGET_BUFFER", 8))
+MAX_POOL_SIZE = int(os.getenv("MAX_POOL_SIZE", 15))
 CHECK_INTERVAL = float(os.getenv("CHECK_INTERVAL", 2))
 
 running = True

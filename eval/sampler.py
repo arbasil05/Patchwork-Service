@@ -1,6 +1,7 @@
 import asyncio
 import time
 import os
+import sys
 import psutil
 import redis
 import rq
@@ -23,16 +24,30 @@ class BurstSampler:
         self.t0 = 0.0
 
     async def _sample_proc_perf(self):
-        """Query Win32_PerfFormattedData_Counters_ProcessorInformation every 5s in background"""
+        """Query CPU performance/throttling every 5s in background"""
         while self.is_running:
             try:
                 def _query():
-                    cmd = ["powershell", "-NoProfile", "-Command", 
-                           "(Get-CimInstance -ClassName Win32_PerfFormattedData_Counters_ProcessorInformation -Filter \"Name='_Total'\").PercentProcessorPerformance"]
-                    res = subprocess.run(cmd, capture_output=True, text=True, timeout=4)
-                    val_str = res.stdout.strip()
-                    if val_str:
-                        return float(val_str)
+                    if sys.platform == "win32":
+                        cmd = ["powershell", "-NoProfile", "-Command", 
+                               "(Get-CimInstance -ClassName Win32_PerfFormattedData_Counters_ProcessorInformation -Filter \"Name='_Total'\").PercentProcessorPerformance"]
+                        res = subprocess.run(cmd, capture_output=True, text=True, timeout=4)
+                        val_str = res.stdout.strip()
+                        if val_str:
+                            return float(val_str)
+                    else:
+                        # Linux: check CPU frequency scaling ratio if available
+                        try:
+                            cur_path = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq"
+                            max_path = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
+                            if os.path.exists(cur_path) and os.path.exists(max_path):
+                                with open(cur_path) as f1, open(max_path) as f2:
+                                    cur = float(f1.read().strip())
+                                    max_f = float(f2.read().strip())
+                                    if max_f > 0:
+                                        return (cur / max_f) * 100.0
+                        except Exception:
+                            pass
                     return None
 
                 perf_val = await asyncio.to_thread(_query)

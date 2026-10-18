@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "results": {
+    "Django Passing": {
+      "passed": true,
+      "status": "completed",
+      "exit_code": 0
+    },
+    "Django Failing": {
+      "passed": true,
+      "status": "completed",
+      "exit_code": 1
+    },
+    "Express Passing": {
+      "passed": true,
+      "status": "completed",
+      "exit_code": 0
+    },
+    "Express Failing": {
+      "passed": true,
+      "status": "completed",
+      "exit_code": 1
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "uname": {
+    "system": "Linux",
+    "node": "bawsil",
+    "release": "7.0.0-31-generic",
+    "version": "#31~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Aug 10 09:38:02 UTC 2",
+    "machine": "x86_64"
+  },
+  "proc_version": "Linux version 7.0.0-31-generic (buildd@lcy02-amd64-060) (x86_64-linux-gnu-gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #31~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Aug 10 09:38:02 UTC 2",
+  "is_wsl": false,
+  "virt": "none",
+  "cpu": {
+    "model": "12th Gen Intel(R) Core(TM) i5-1235U",
+    "nproc": 12,
+    "physical_cores": 10,
+    "governor": "powersave",
+    "cur_freq_mhz": [
+      1946.56,
+      4400.0,
+      4000.0,
+      3999.959,
+      2674.08,
+      2744.958,
+      2844.477,
+      2937.706,
+      3099.188,
+      2956.576,
+      2703.297,
+      400.0
+    ]
+  },
+  "memory": {
+    "MemTotal_kB": 16049436,
+    "MemAvailable_kB": 9893088,
+    "SwapTotal_kB": 7999484
+  },
+  "ulimit_nofile": {
+    "soft": 1048576,
+    "hard": 1048576
+  },
+  "docker": {
+    "server_version": "29.8.1",
+    "storage_driver": "overlayfs",
+    "cgroup_driver": "systemd",
+    "cgroup_version": "2",
+    "cpus": 12,
+    "memory_bytes": 16434622464,
+    "type": "native_linux"
+  },
+  "redis": {
+    "version": "8.8.0",
+    "container": "patchwork-redis-1"
+  },
+  "python": {
+    "version": "3.12.3",
+    "redis_py": "8.0.1",
+    "rq": "2.10.0",
+    "numpy": "2.5.4",
+    "pandas": "3.0.6"
+  },
+  "images": {
+    "patchwork-django:latest": "Python 3.12.11",
+    "patchwork-express:latest": "v22.23.1"
+  },
+  "image_ids": {
+    "patchwork-django:latest": "sha256:4b1327fb630a0",
+    "patchwork-express:latest": "sha256:3d7d9cc09ade6"
+  },
+  "git_sha": "705b3c28ec7475a5b4c04611ea6cc75c13cb1d38",
+  "current_branch_sha": "88b118c3894c76934aa9b4662f4a34dc5f81604c",
+  "power": [
+    {
+      "name": "BAT0",
+      "status": "Full"
+    }
+  ]
+}
