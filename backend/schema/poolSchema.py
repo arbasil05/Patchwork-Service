@@ -4,15 +4,18 @@ from typing import Optional
 class PoolCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=64)
     image_tag: str = Field(..., min_length=1)
-    max_containers: int = Field(..., ge=0, le=10)
+    max_containers: int = Field(..., ge=0, le=100)
+    target_buffer: Optional[int] = Field(None, ge=0, le=100)
 
 class PoolPatch(BaseModel):
-    max_containers: int = Field(..., ge=0, le=10)
+    max_containers: Optional[int] = Field(None, ge=0, le=100)
+    target_buffer: Optional[int] = Field(None, ge=0, le=100)
 
 class PoolOut(BaseModel):
     name: str
     image_tag: str
     max_containers: int
+    target_buffer: Optional[int] = None
     total: int
     free: int
     occupied: int

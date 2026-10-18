@@ -17,6 +17,10 @@ def _get_busy_key(image_tag):
     return f"pool:{image_tag}:busy"
 
 
+def _get_pending_key(image_tag):
+    return f"pool:{image_tag}:pending"
+
+
 def create_container(image_tag, register_in_pool=True):
     # Sanitize the image_tag to use as a prefix in the container name
     sanitized_tag = image_tag.replace(":", "_").replace("/", "_")

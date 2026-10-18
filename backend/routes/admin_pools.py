@@ -48,6 +48,7 @@ def _enrich_pool(pool: dict) -> PoolOut:
         name=pool["name"],
         image_tag=image_tag,
         max_containers=pool.get("max_containers", 10),
+        target_buffer=pool.get("target_buffer"),
         total=total,
         free=free,
         occupied=occupied,
@@ -144,6 +145,7 @@ def create_pool(payload: PoolCreate, admin: str = Depends(get_current_admin)):
             name=payload.name,
             image_tag=payload.image_tag,
             max_containers=payload.max_containers,
+            target_buffer=payload.target_buffer,
             is_default=False
         )
         return _enrich_pool(created)
@@ -171,7 +173,13 @@ def scale_pool(name: str, payload: PoolPatch, admin: str = Depends(get_current_a
             detail=f"Pool '{name}' not found."
         )
 
-    updated = update_pool_def(name, {"max_containers": payload.max_containers})
+    updates = {}
+    if payload.max_containers is not None:
+        updates["max_containers"] = payload.max_containers
+    if payload.target_buffer is not None:
+        updates["target_buffer"] = payload.target_buffer
+
+    updated = update_pool_def(name, updates)
     return _enrich_pool(updated)
 
 @router.post("/{name}/suspend", response_model=PoolOut)
