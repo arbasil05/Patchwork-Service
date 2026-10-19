@@ -36,17 +36,17 @@ docker_client = docker.from_env()
 SUPPORTED_IMAGES = [t.strip() for t in settings.SUPPORTED_IMAGES.split(",") if t.strip()]
 
 # Global fallback defaults
-DEFAULT_FALLBACK_BUFFER = int(os.getenv("TARGET_BUFFER", 3))
-DEFAULT_FALLBACK_MAX = int(os.getenv("MAX_POOL_SIZE", 10))
+DEFAULT_FALLBACK_BUFFER = int(os.getenv("TARGET_BUFFER", 12))
+DEFAULT_FALLBACK_MAX = int(os.getenv("MAX_POOL_SIZE", 20))
 CHECK_INTERVAL = float(os.getenv("CHECK_INTERVAL", 2))
-PROVISION_CONCURRENCY = int(os.getenv("PROVISION_CONCURRENCY", 2))
+PROVISION_CONCURRENCY = int(os.getenv("PROVISION_CONCURRENCY", 5))
 SINGLE_DAEMON_LOCK_KEY = "lock:pool_daemon"
 SINGLE_DAEMON_LOCK_TTL = 15  # seconds
 
 # Framework default targets if not explicitly set in pool definition
 FRAMEWORK_DEFAULTS = {
-    "patchwork-django": {"target_buffer": 8, "max_containers": 15},
-    # "patchwork-express": {"target_buffer": 3, "max_containers": 15},
+    "patchwork-django": {"target_buffer": 12, "max_containers": 20},
+    # "patchwork-express": {"target_buffer": 12, "max_containers": 20},
 }
 
 running = True

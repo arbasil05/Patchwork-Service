@@ -80,7 +80,7 @@ def is_pool_suspended(image_tag: str) -> bool:
     return False
 
 
-def acquire_container(image_tag, timeout_seconds=10, return_stats=False):
+def acquire_container(image_tag, timeout_seconds=30, return_stats=False):
     idle_key = _get_idle_key(image_tag)
     busy_key = _get_busy_key(image_tag)
     start_time = time.time()

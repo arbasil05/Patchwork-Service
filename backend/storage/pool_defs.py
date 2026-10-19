@@ -24,8 +24,8 @@ def seed_default_pools(force_sync_defaults: bool = False):
     now = datetime.now(timezone.utc).isoformat()
 
     default_configs = {
-        "patchwork-django": {"max_containers": 15, "target_buffer": 8},
-        "patchwork-express": {"max_containers": 15, "target_buffer": 3},
+        "patchwork-django": {"max_containers": 20, "target_buffer": 12},
+        "patchwork-express": {"max_containers": 20, "target_buffer": 12},
     }
 
     for image_tag in default_tags:
@@ -58,8 +58,8 @@ def seed_default_pools(force_sync_defaults: bool = False):
             existing_data = redis_client.hgetall(key)
             updates = {}
             if force_sync_defaults:
-                # Update max_containers to 15 if missing or currently old default 10
-                if existing_data.get("max_containers") in (None, "", "10"):
+                # Update max_containers if missing
+                if existing_data.get("max_containers") in (None, ""):
                     updates["max_containers"] = str(cfg["max_containers"])
                 # Update target_buffer if missing
                 if existing_data.get("target_buffer") in (None, ""):

@@ -4,7 +4,7 @@ from pydantic import field_validator
 class Settings(BaseSettings):
     AUTH_MODE: str = "none"
     REDIS_HOST: str = "localhost"
-    SUPPORTED_IMAGES: str = "patchwork-django:latest,patchwork-express:latest"
+    SUPPORTED_IMAGES: str = "patchwork-django:latest"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
